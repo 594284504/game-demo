@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>贪吃李现</title>
+<style>
+
+
+.map {
+    width: 900px;
+    height: 700px;
+    background-image: url(img/background_lx.jpeg);
+    background-size: 120%;
+  position: relative;
+   margin:100px auto;
+   z-index: 2;
+   box-shadow: 7px 8px 8px rgba(0,0,0,0.6);
+}
+.aa {
+   
+    width: 120px;
+    height: 30px;
+   position: absolute;
+   top: -45px;
+   left: 200px;
+ background-color:orange;
+ border-radius: 10%;
+ font-size: 20px;
+ color: blueviolet;
+}
+.ipt {
+   position: absolute;
+   top:-50px;
+   left: 350px;
+   width: 80px;
+   height: 40px;
+   background-color: pink;
+   font-size: 16px;
+   color: white;
+ 
+}
+.res {
+    position: absolute;
+    width: 100%;
+    height: 130%;
+    top: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+   display: none;
+    z-index: 999;
+    
+}
+.end {
+    position: relative;
+    margin: 200px auto;
+    width: 500px;
+    height: 300px;
+    background-color: rgba(248, 190, 180, 0.828);
+    border-radius: 10%;
+    box-shadow: 7px 8px 8px rgba(0,0,0,0.6);
+}
+.Restart{
+    position: absolute;
+    width: 80px;
+    height: 30px;
+   background-color: skyblue;
+    left: 38%;
+    top: 84%;
+    border-radius: 10%;
+    box-shadow: 2px 3px 4px rgba(0,0,0,0.6);
+}
+.res>.end>img {
+    position: absolute;
+    left: 34%;
+    top: 30%;
+    
+}
+
+#myCanvas {
+            position:absolute;
+            left:0px;
+            top:0px;
+            width: 100%;
+            height: 100%;
+        }
+*{cursor: url("img/lovely_boy.ico") 20 20,auto;}
+</style>
+</head>
+<body>
+        <canvas id="myCanvas"></canvas>
+                
+            
+    <audio src="img/music.mp3" id="au"></audio>
+    <div class="map" id="map">  <input type="button" value="开始游戏" id="btn" class="ipt" disable=disable> <div class="aa" id="dd"></div></div>
+   <div class="res" id="res">
+       <div class="end">
+          <a href=""> <input type="button"   href="demo.html"  class="Restart" value="Restart!"></a>
+            
+       
+           <img src="img/lxgif.jpg" width="140px" height="140px" alt="">
+        </div>
+    </div>
+
+
+    <script src="Untitled-1.js"></script>
+  
+    <script>
+    
+
+ 
+window.onload=function(){
+    
+ //食物的创建，静态食物的表面数据
+ let map=my$("map");
+ 
+ //立即释放这些方法
+ (function(){
+   var temp_food=[];
+   function Food(x,y,width,height,color){
+      this.x=x||0;
+      this.y=y||0;
+      this.width=width||40;
+      this.height=height||40;
+      this.color=color||"green";
+   }
+   //食物的初始化在某个DIV盒子内，让食物出现
+  Food.prototype.init=function(map){
+      //出现新食物前先删除前一个现实食物，保证只存在一个食物在MAP内
+      remove_food();
+      //动态创建一个食物并添加到MAP内
+     var food_show=document.createElement("div");
+     map.appendChild(food_show);
+     //把静态食物的表面数据应用到实例实物上
+     food_show.style.width=this.width+"px";
+     food_show.style.height=this.height+"px";
+     food_show.style.backgroundImage="url('img/lx2.PNG')";
+     food_show.style.backgroundSize="150%"
+     food_show.style.borderRadius="100%"
+     food_show.style.position="absolute";
+     //创建一个位置随机的食物
+     this.x=parseInt(Math.random()*map.offsetWidth/this.width)*this.width;
+     this.y=parseInt(Math.random()*map.offsetHeight/this.height)*this.height;
+     food_show.style.left=this.x+"px";
+     food_show.style.top=this.y+"px";
+     //把这个实例食物寄存于一个储存空间内，作用是为了下一个食物出现时先删除储存空间内的前一个食物；
+     temp_food.push(food_show)
+     
+  }
+  //删除食物的方法，让初始化去应用
+  function remove_food(){
+      for(i=0;i<temp_food.length;i++){
+          var temp=temp_food[i];
+          temp.parentNode.removeChild(temp);
+          temp_food.splice(i,1)
+
+      }
+  }
+    window.Food=Food
+
+ }());    
+
+
+//蛇的创建，静态蛇的表面数据
+(function(){
+    //存放蛇身体的每个部分
+    var temp_snake=[];
+    //蛇的静态构造数据，每个身体的部分的坐标的对比比例
+    function Snake(width,height,direction){
+        this.width=width||40;
+        this.height=height||40;
+        this.body=[
+            {x:3,y:2,color:"red"},
+            {x:2,y:2,color:"url('img/lx.PNG')"},
+            {x:1,y:2,color:"url('img/lx.PNG')"}
+        ]
+         this.direction=direction||"right"   
+        
+    };
+    //让蛇初始化出现在map内
+    Snake.prototype.init=function(){
+    //循环遍历蛇的每个部分
+    remove()
+    for(i=0;i<this.body.length;i++){
+        var part_position=this.body[i]
+      var snake_part=document.createElement("div");
+      map.appendChild(snake_part)
+      snake_part.style.width=this.width+"px";
+      snake_part.style.height=this.height+"px";
+      snake_part.style.position="absolute";
+      snake_part.style.backgroundImage=part_position.color;
+      snake_part.style.backgroundSize="40px 40px"
+      snake_part.style.borderRadius="100%"
+      snake_part.style.left=part_position.x*this.width+"px";
+      snake_part.style.top=part_position.y*this.width+"px";
+      temp_snake.push(snake_part)
+    }
+    temp_snake[0].style.backgroundImage="url('img/fans_lx.PNG')"
+    
+    
+    }
+    Snake.prototype.move=function(map){
+        for(i=this.body.length-1;i>0;i--){
+            this.body[i].x=this.body[i-1].x;
+            this.body[i].y=this.body[i-1].y;
+            
+        }
+        switch (this.direction){
+            case "right":this.body[0].x+=1;break;
+            case "left":this.body[0].x-=1;break;
+            case "top":this.body[0].y-=1;break;
+            case "bottom":this.body[0].y+=1;break;
+        }
+        var headX=this.body[0].x*this.width;
+      var headY=this.body[0].y*this.height;
+      
+
+     
+      if(headX==game.food.x&&headY==game.food.y){
+          my$("au").play()
+          var last=this.body[this.body.length-1]
+        this.body.push({x:last.x,y:last.y,color:last.color})
+         game.food.init(map)
+      }
+    }
+    function remove(){
+        for(i=temp_snake.length-1;i>=0;i--){
+            temp_snake[i].parentNode.removeChild(temp_snake[i])
+            temp_snake.splice(i,1)
+        }
+    }
+    window.Snake=Snake;
+}());
+
+
+(function(){
+    var that=null;
+    function Game(){
+        this.food=new Food( 0,0 ,40,40,"hotpink");
+        this.snake=new Snake();
+        this.map=document.querySelector(".map");
+        
+        that=this    
+      }
+
+      Game.prototype.init=function(){
+         
+        this.food.init(this.map);
+        
+         this.snake.init(this.map);
+
+    var timeId=setInterval(function(){
+        this.snake.move(this.map);
+      this.snake.init(this.map);
+      var maxX=map.offsetWidth/this.snake.width;
+      var maxY=map.offsetHeight/this.snake.height;
+      var headX=this.snake.body[0].x;
+      var headY=this.snake.body[0].y;
+    
+      if(headX<0||headX>=maxX||headY<0||headY>=maxY){
+          clearInterval(timeId)
+          my$("res").style.display="block"
+          var word=document.createElement("div")
+          word.innerText= "成功捕获到"+(parseInt(game.snake.body.length)-1)+"个李现！";
+          
+          word.style.paddingLeft="130px"
+          word.style.paddingTop="30px"
+          word.style.fontSize="24px";
+          word.style.fontWeight="600";
+          word.style.color="#009FCC"
+          my$("res").children[0].appendChild(word)
+      }
+    }.bind(that),200)
+    
+
+    this.keyDown()
+    }
+    Game.prototype.keyDown=function(){
+        document.addEventListener("keydown",function(e){
+            switch(e.keyCode){
+                case 37:this.snake.direction="left";break;
+                case 38:this.snake.direction="top";break;
+                case 39:this.snake.direction="right";break;
+                case 40:this.snake.direction="bottom";break;
+            }
+        }.bind(that),false)
+    }
+    
+    
+    window.Game=Game
+}())
+
+game=new Game()
+var btn = document.getElementById("map").children[0]
+game=new Game()
+    btn.onclick=function(){
+        
+    game.init()
+   var timer= setInterval(function sss(){
+   my$("dd").innerHTML="抓了"+(parseInt(game.snake.body.length)-1)+"个李现";
+   console.log("ss")  
+ },1000)
+
+    }
+    
+   
+   
+
+
+
+
+
+
+
+
+
+
+
+                   }
+                  
+                
+            
+            
+            
+            
+            
+            
+            </script>
+       
+             <script>
+                function aa() {
+                    var canvas = document.getElementById("myCanvas");
+                    var ctx = canvas.getContext("2d");
+             
+                    var W = window.innerWidth,
+                        H = window.innerHeight;
+                    canvas.width = W;
+                    canvas.height =H;
+             
+                    var particles = [];
+                    var mouse = {};
+             
+             
+                    var particle_count = 50;
+                    for (var i = 0; i < particle_count; i++) {
+                        particles.push(new particle());
+                    }
+             
+             
+                    canvas.addEventListener('mousemove', track_mouse, false);
+             
+                    function track_mouse(e) {
+             
+                        mouse.x = e.pageX;
+                        mouse.y = e.pageY;
+                    }
+             
+                    function particle() {
+                        this.speed = {
+                            x: -2.5 + Math.random() * 5,
+                            y: -15 + Math.random() * 10
+                        };
+             
+                        if (mouse.x && mouse.y) {
+                            this.location = {
+                                x: mouse.x,
+                                y: mouse.y
+                            };
+                        } else {
+                            this.location = {
+                                x: W / 2,
+                                y: H / 2
+                            };
+                        }
+                        //radius range = 10-30
+                        this.radius = 10 + Math.random() * 20;
+                        //life range = 20-30
+                        this.life = 20 + Math.random() * 10;
+                        this.remaining_life = this.life;
+                        //colors
+                        this.r = Math.round(Math.random() * 255);
+                        this.g = Math.round(Math.random() * 255);
+                        this.b = Math.round(Math.random() * 255);
+                    }
+             
+                    function draw() {
+                        ctx.globalCompositeOperation = "source-over";
+                        ctx.fillStyle = "darkgray";
+                        ctx.fillRect(0, 0, W, H);
+                        ctx.globalCompositeOperation = "lighter";
+             
+                        for (var i = 0; i < particles.length; i++) {
+                            var p = particles[i];
+                            ctx.beginPath();
+                         
+                            p.opacity = Math.round(p.remaining_life / p.life * 100) / 100
+                   
+                            var gradient = ctx.createRadialGradient(p.location.x, p.location.y, 0, p.location.x, p.location.y, p.radius);
+                            gradient.addColorStop(0, "rgba(" + p.r + ", " + p.g + ", " + p.b + ", " + p.opacity + ")");
+                            gradient.addColorStop(0.5, "rgba(" + p.r + ", " + p.g + ", " + p.b + ", " + p.opacity + ")");
+                            gradient.addColorStop(1, "rgba(" + p.r + ", " + p.g + ", " + p.b + ", 0)");
+                            ctx.fillStyle = gradient;
+                            ctx.arc(p.location.x, p.location.y, p.radius, Math.PI * 2, false);
+                            ctx.fill();
+             
+              
+                            p.remaining_life--;
+                            p.radius--;
+                            p.location.x += p.speed.x;
+                            p.location.y += p.speed.y;
+                            
+                            if (p.remaining_life < 0 || p.radius < 0) {
+                                particles[i] = new particle();
+             
+                            }
+                        }
+                    }
+             
+                    setInterval(draw, 30);
+                }
+                aa();
+            </script>
+       </body>        
+</html>
